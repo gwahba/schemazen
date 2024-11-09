@@ -43,6 +43,10 @@ public class Script : BaseCommand {
 			"A comma separated list of the types that will only be scripted. Valid types: " +
 			Database.ValidTypes,
 			o => OnlyTypes = o);
+		HasOption(
+			"columnHint=",
+			"Comma Separated Columns to set which default value when exporting data.",
+			o => ColumnHint = o);
 	}
 
 	protected string DataTables { get; set; }
@@ -51,6 +55,7 @@ public class Script : BaseCommand {
 	protected string DataTablesPattern { get; set; }
 	protected string DataTablesExcludePattern { get; set; }
 	protected string TableHint { get; set; }
+	protected string ColumnHint { get; set; }
 
 	public override int Run(string[] args) {
 		_logger = new Logger(Verbose);
@@ -82,6 +87,7 @@ public class Script : BaseCommand {
 				DataTablesPattern,
 				DataTablesExcludePattern,
 				TableHint,
+				ColumnHint,
 				filteredTypes);
 		} catch (Exception ex) {
 			throw new ConsoleHelpAsException(ex.Message);

@@ -12,6 +12,7 @@ public class ScriptCommand : BaseCommand {
 		string dataTablesPattern,
 		string dataTablesExcludePattern,
 		string tableHint,
+		string columnHint,
 		List<string> filteredTypes) {
 		if (!Overwrite && Directory.Exists(ScriptDir)) {
 			var message = $"{ScriptDir} already exists - you must set overwrite to true";
@@ -33,7 +34,7 @@ public class ScriptCommand : BaseCommand {
 			foreach (var t in tables.Where(t => !db.DataTables.Contains(t))) db.DataTables.Add(t);
 		}
 
-		db.ScriptToDir(tableHint, Logger.Log);
+		db.ScriptToDir(tableHint, columnHint, Logger.Log);
 
 		Logger.Log(
 			TraceLevel.Info,

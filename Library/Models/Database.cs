@@ -1209,7 +1209,7 @@ where name = @dbname
 
 	#region Script
 
-	public void ScriptToDir(string tableHint = null, Action<TraceLevel, string> log = null) {
+	public void ScriptToDir(string tableHint = null,  string columnHint = null, Action<TraceLevel, string> log = null) {
 		if (log == null) log = (tl, s) => { };
 
 		if (Directory.Exists(Dir)) {
@@ -1260,7 +1260,7 @@ where name = @dbname
 		WriteScriptDir("synonyms", Synonyms.ToArray(), log);
 		WriteScriptDir("permissions", Permissions.ToArray(), log);
 
-		ExportData(tableHint, log);
+		ExportData(tableHint, columnHint, log);
 	}
 
 	private void WritePropsScript(Action<TraceLevel, string> log) {
@@ -1329,7 +1329,7 @@ where name = @dbname
 				(current, invalidChar) => current.Replace(invalidChar, '-'));
 	}
 
-	public void ExportData(string tableHint = null, Action<TraceLevel, string> log = null) {
+	public void ExportData(string tableHint = null, string columnHint = null, Action<TraceLevel, string> log = null) {
 		if (!DataTables.Any())
 			return;
 		var dataDir = Dir + "/data";
@@ -1343,7 +1343,7 @@ where name = @dbname
 				$"Exporting data from {t.Owner + "." + t.Name} (table {++index} of {DataTables.Count})...");
 			var filePathAndName = dataDir + "/" + MakeFileName(t) + ".tsv";
 			var sw = File.CreateText(filePathAndName);
-			t.ExportData(Connection, sw, tableHint);
+			t.ExportData(Connection, sw, tableHint, columnHint);
 
 			sw.Flush();
 			if (sw.BaseStream.Length == 0) {

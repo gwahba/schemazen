@@ -138,7 +138,7 @@ public class Table : INameable, IHasOwner, IScriptable {
 		return $"DROP {(IsType ? "TYPE" : "TABLE")} [{Owner}].[{Name}]";
 	}
 
-	public void ExportData(string conn, TextWriter data, string tableHint = null) {
+	public void ExportData(string conn, TextWriter data, string tableHint = null, string columnHint = null) {
 		if (IsType)
 			throw new InvalidOperationException();
 
@@ -155,6 +155,9 @@ public class Table : INameable, IHasOwner, IScriptable {
 
 		AppendOrderBy(sql, cols);
 
+		var columnNameCache = string.Empty;
+		var overriddenColumnValue = string.Empty;
+
 		using (var cn = new SqlConnection(conn)) {
 			cn.Open();
 			using (var cm = cn.CreateCommand()) {
@@ -163,7 +166,15 @@ public class Table : INameable, IHasOwner, IScriptable {
 					while (dr.Read()) {
 						foreach (var c in cols) {
 							var ordinal = dr.GetOrdinal(c.Name);
-							if (dr.IsDBNull(ordinal))
+
+							if (string.Compare(columnNameCache,c.Name, StringComparison.InvariantCultureIgnoreCase) != 0) {
+								columnNameCache = c.Name;
+								overriddenColumnValue = CheckColHint(c.Name, columnHint);
+							}
+
+							if (overriddenColumnValue != null)
+								data.Write(overriddenColumnValue);
+							else if (dr.IsDBNull(ordinal))
 								data.Write(_nullValue);
 							else if (dr.GetDataTypeName(ordinal).EndsWith(".sys.geometry")
 								  || dr.GetDataTypeName(ordinal).EndsWith(".sys.geography"))
@@ -198,6 +209,26 @@ public class Table : INameable, IHasOwner, IScriptable {
 				}
 			}
 		}
+	}
+
+	private static string CheckColHint(string colName, string colsHint)
+	{
+		if (string.IsNullOrEmpty(colsHint))
+			return (string) null;
+		string[] strArray1 = colsHint.Split('=');
+		if (strArray1.Length != 2)
+			return (string) null;
+		string[] strArray2 = strArray1[0].Split(',');
+		string str = strArray1[1];
+		for (int index = 0; index < strArray2.Length; ++index)
+		{
+			if (string.Equals(strArray2[index], colName, StringComparison.CurrentCultureIgnoreCase))
+			{
+				string[] strArray3 = str.Split(',');
+				return strArray3.Length == strArray2.Length ? strArray3[index] : (string) null;
+			}
+		}
+		return (string) null;
 	}
 
 	public void ImportData(string conn, string filename) {
